@@ -2,8 +2,8 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import pool from "./config/db.js";
-import wishlistRoutes from "./routes/wishlist.js"; // ✅ import route file
+import pool from "./config/db.js"; // ✅ now using Postgres
+import wishlistRoutes from "./routes/wishlist.js";
 
 dotenv.config();
 
@@ -14,17 +14,35 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 
-// ✅ Test MySQL connection
-pool.getConnection()
-  .then(() => console.log("✅ Connected to MySQL"))
-  .catch(err => console.error("❌ MySQL connection error:", err.message));
+// ✅ Test PostgreSQL connection
+pool
+  .connect()
+  .then(client => {
+    console.log("✅ Connected to PostgreSQL");
+    client.release();
+  })
+  .catch(err => console.error("❌ PostgreSQL connection error:", err.message));
 
-// ✅ Use the wishlist routes here
+// ✅ Use your wishlist routes
 app.use("/api/wishlist", wishlistRoutes);
 
-// Test route
+// Basic API check route
 app.get("/api/ping", (req, res) => {
   res.json({ message: "Finsight backend is live!" });
+});
+
+// ✅ Add test DB route
+app.get("/test-db", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT NOW()");
+    res.json({
+      message: "✅ Database connected successfully!",
+      serverTime: result.rows[0].now,
+    });
+  } catch (err) {
+    console.error("❌ Database test error:", err.message);
+    res.status(500).json({ error: "Database connection failed", details: err.message });
+  }
 });
 
 // Start server
