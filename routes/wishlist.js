@@ -1,4 +1,3 @@
-
 // server/routes/wishlist.js
 import express from "express";
 import pool from "../config/db.js";
@@ -8,8 +7,8 @@ const router = express.Router();
 // ✅ Get all wishlist items
 router.get("/", async (req, res) => {
   try {
-    const [rows] = await pool.query("SELECT * FROM wishlist ORDER BY id DESC");
-    res.json(rows);
+    const result = await pool.query("SELECT * FROM wishlist ORDER BY id DESC");
+    res.json(result.rows);
   } catch (err) {
     console.error("Error fetching wishlist:", err.message);
     res.status(500).json({ error: "Failed to fetch wishlist" });
@@ -26,7 +25,7 @@ router.post("/", async (req, res) => {
     }
 
     await pool.query(
-      "INSERT INTO wishlist (name, amount, priority) VALUES (?, ?, ?)",
+      "INSERT INTO wishlist (name, amount, priority) VALUES ($1, $2, $3)",
       [name, amount, priority || 1]
     );
 
@@ -41,7 +40,7 @@ router.post("/", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query("DELETE FROM wishlist WHERE id = ?", [id]);
+    await pool.query("DELETE FROM wishlist WHERE id = $1", [id]);
     res.json({ success: true, message: "Item deleted!" });
   } catch (err) {
     console.error("Error deleting wishlist item:", err.message);

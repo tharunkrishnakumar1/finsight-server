@@ -535,6 +535,8 @@
 
 
   <script>
+    
+    const API_BASE = "https://finsight-xp7a.onrender.com/api";
 
     async function handleCSV(event) {
   const file = event.target.files[0];
@@ -554,7 +556,7 @@
       if (!date || !description || isNaN(parseFloat(amount))) continue;
 
       try {
-        const res = await fetch("/api/transactions", {
+        const res = await fetch("{API_BASE}/transactions", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -637,12 +639,12 @@
 
 // --- BUDGET API FUNCTIONS ---
 async function getBudgets() {
-  const res = await fetch("/api/budgets");
+  const res = await fetch("{API_BASE}/budgets");
   return await res.json();
 }
 
 async function addBudget(category, limit_amount) {
-  const res = await fetch("/api/budgets", {
+  const res = await fetch("{API_BASE}/budgets", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ category, limit_amount }),
@@ -651,17 +653,17 @@ async function addBudget(category, limit_amount) {
 }
 
 async function deleteBudget(id) {
-  await fetch(`/api/budgets/${id}`, { method: "DELETE" });
+  await fetch(`{API_BASE}/budgets/${id}`, { method: "DELETE" });
 }
 
 // --- WISHLIST API FUNCTIONS ---
 async function getWishlist() {
-  const res = await fetch("/api/wishlist");
+  const res = await fetch("{API_BASE}/wishlist");
   return await res.json();
 }
 
 async function addWishlistItem(name, amount, priority = 1) {
-  const res = await fetch("/api/wishlist", {
+  const res = await fetch("{API_BASE}/wishlist", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name, amount, priority }),
@@ -670,13 +672,13 @@ async function addWishlistItem(name, amount, priority = 1) {
 }
 
 async function deleteWishlistItem(id) {
-  await fetch(`/api/wishlist/${id}`, { method: "DELETE" });
+  await fetch(`{API_BASE}/wishlist/${id}`, { method: "DELETE" });
 }
 
 async function loadData() {
   // ✅ Load wishlist from backend API
   wishlist = await getWishlist();
-        transactions = await (await fetch("/api/transactions")).json();
+        transactions = await (await fetch("{API_BASE}/transactions")).json();
         budgets = await getBudgets();
         const savedRules = JSON.parse(localStorage.getItem('categoryRules'));
         const defaultRules = {};
