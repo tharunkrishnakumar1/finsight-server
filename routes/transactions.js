@@ -1,70 +1,52 @@
-
+// server/routes/transactions.js
 import express from "express";
 import pool from "../config/db.js";
 
 const router = express.Router();
 
-// ✅ get all transactions (with optional filters)
+// ✅ Get all transactions
 router.get("/", async (req, res) => {
-  const { account_id, category, sort, start_date, end_date } = req.query;
-
-  // base query
-  let query = "SELECT * FROM transactions WHERE 1=1";
-  const params = [];
-
-  // optional filters
-  if (account_id) {
-    query += " AND account_id = ?";
-    params.push(account_id);
-  }
-  if (category) {
-    query += " AND category = ?";
-    params.push(category);
-  }
-  if (start_date) {
-    query += " AND date >= ?";
-    params.push(start_date);
-  }
-  if (end_date) {
-    query += " AND date <= ?";
-    params.push(end_date);
-  }
-
-  // optional sort
-  if (sort && sort.toLowerCase() === "desc") {
-    query += " ORDER BY date DESC";
-  } else {
-    query += " ORDER BY date ASC";
-  }
-
   try {
-    const [rows] = await pool.query(query, params);
-    res.json(rows);
+    const result = await pool.query("SELECT * FROM transactions ORDER BY id DESC");
+    res.json(result.rows);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
+    console.error("Error fetching transactions:", err.message);
+    res.status(500).json({ error: "Failed to fetch transactions" });
   }
 });
 
-
-// ✅ create a new transaction
+// ✅ Add a new transaction
 router.post("/", async (req, res) => {
-  const { account_id, amount, category, description, date } = req.body;
   try {
-    const [result] = await pool.query(
-      "INSERT INTO transactions (account_id, amount, category, description, date) VALUES (?, ?, ?, ?, ?)",
-      [account_id, amount, category, description, date]
-    );
-    res.json({
-      id: result.insertId,
-      account_id,
-      amount,
-      category,
-      description,
-      date,
-    });
+    const { description, amount, category, date } = req.body;
+    if (!description || !amount) {
+      return res.status(400).json({ error: "Description and amount are required" });
+    }
+
+    const query = `
+      INSERT INTO transactions (description, amount, category, date)
+      VALUES ($1, $2, $3, $4)
+      RETURNING *;
+    `;
+    const values = [description, amount, category || null, date || new Date()];
+    const result = await pool.query(query, values);
+
+    res.json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Error adding transaction:", err.message);
+    res.status(500).json({ error: "Failed to add transaction" });
+  }
+});
+
+// ✅ Delete a transaction
+router.delete("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query("DELETE FROM transactions WHERE id = $1", [id]);
+    res.json({ success: true, message: "Transaction deleted" });
+  } catch (err) {
+    console.error("Error deleting transaction:", err.message);
+    res.status(500).json({ error: "Failed to delete transaction" });
   }
 });
 

@@ -1,3 +1,4 @@
+// server/routes/budgets.js
 import express from "express";
 import pool from "../config/db.js";
 
@@ -6,39 +7,46 @@ const router = express.Router();
 // ✅ Get all budgets
 router.get("/", async (req, res) => {
   try {
-    const [rows] = await pool.query("SELECT * FROM budgets ORDER BY id DESC");
-    res.json(rows);
+    const result = await pool.query("SELECT * FROM budgets ORDER BY id DESC");
+    res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Error fetching budgets:", err.message);
+    res.status(500).json({ error: "Failed to fetch budgets" });
   }
 });
 
 // ✅ Add a new budget
 router.post("/", async (req, res) => {
-  const { category, limit_amount } = req.body;
   try {
-    const [result] = await pool.query(
-      "INSERT INTO budgets (category, limit_amount) VALUES (?, ?)",
-      [category, limit_amount]
-    );
-    res.json({
-      id: result.insertId,
-      category,
-      limit_amount,
-      spent: 0,
-    });
+    const { category, amount, spent, start_date, end_date } = req.body;
+    if (!category || !amount) {
+      return res.status(400).json({ error: "Category and amount are required" });
+    }
+
+    const query = `
+      INSERT INTO budgets (category, amount, spent, start_date, end_date)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING *;
+    `;
+    const values = [category, amount, spent || 0, start_date || null, end_date || null];
+    const result = await pool.query(query, values);
+
+    res.json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Error adding budget:", err.message);
+    res.status(500).json({ error: "Failed to add budget" });
   }
 });
 
 // ✅ Delete a budget
 router.delete("/:id", async (req, res) => {
   try {
-    await pool.query("DELETE FROM budgets WHERE id = ?", [req.params.id]);
-    res.json({ success: true });
+    const { id } = req.params;
+    await pool.query("DELETE FROM budgets WHERE id = $1", [id]);
+    res.json({ success: true, message: "Budget deleted" });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Error deleting budget:", err.message);
+    res.status(500).json({ error: "Failed to delete budget" });
   }
 });
 
