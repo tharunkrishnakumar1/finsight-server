@@ -18,8 +18,12 @@ router.get("/", async (req, res) => {
 // ✅ Add a new budget
 router.post("/", async (req, res) => {
   try {
-    const { category, amount, spent, start_date, end_date } = req.body;
-    if (!category || !amount) {
+    const { category, limit_amount, amount, spent, start_date, end_date } = req.body;
+    const finalAmount = amount || limit_amount; // map frontend field
+
+    console.log("Incoming body:", req.body); // 🪄 for debugging
+
+    if (!category || !finalAmount) {
       return res.status(400).json({ error: "Category and amount are required" });
     }
 
@@ -28,7 +32,7 @@ router.post("/", async (req, res) => {
       VALUES ($1, $2, $3, $4, $5)
       RETURNING *;
     `;
-    const values = [category, amount, spent || 0, start_date || null, end_date || null];
+    const values = [category, finalAmount, spent || 0, start_date || null, end_date || null];
     const result = await pool.query(query, values);
 
     res.json(result.rows[0]);
@@ -37,6 +41,7 @@ router.post("/", async (req, res) => {
     res.status(500).json({ error: "Failed to add budget" });
   }
 });
+
 
 // ✅ Delete a budget
 router.delete("/:id", async (req, res) => {
