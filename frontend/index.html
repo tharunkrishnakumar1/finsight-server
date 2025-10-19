@@ -3,6 +3,25 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script>
+  // 🚀 Instantly apply saved theme *before* the page renders
+  (() => {
+    try {
+      const savedTheme = localStorage.getItem("theme");
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const shouldBeDark = savedTheme === "dark" || (!savedTheme && prefersDark);
+
+      if (shouldBeDark) {
+        document.documentElement.classList.add("dark-preload");
+        document.documentElement.style.backgroundColor = "#121212";
+      } else {
+        document.documentElement.style.backgroundColor = "#f5f7fa";
+      }
+    } catch (e) {
+      console.error("Theme preload error:", e);
+    }
+  })();
+</script>
   <title>FinSight</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -556,7 +575,7 @@
       if (!date || !description || isNaN(parseFloat(amount))) continue;
 
       try {
-        const res = await fetch("{API_BASE}/transactions", {
+        const res = await fetch(`${API_BASE}/transactions`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -639,12 +658,12 @@
 
 // --- BUDGET API FUNCTIONS ---
 async function getBudgets() {
-  const res = await fetch("{API_BASE}/budgets");
+  const res = await fetch(`${API_BASE}/budgets`);
   return await res.json();
 }
 
 async function addBudget(category, limit_amount) {
-  const res = await fetch("{API_BASE}/budgets", {
+  const res = await fetch(`${API_BASE}/budgets`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ category, limit_amount }),
@@ -653,17 +672,17 @@ async function addBudget(category, limit_amount) {
 }
 
 async function deleteBudget(id) {
-  await fetch(`{API_BASE}/budgets/${id}`, { method: "DELETE" });
+  await fetch(`${API_BASE}/budgets/${id}`, { method: "DELETE" });
 }
 
 // --- WISHLIST API FUNCTIONS ---
 async function getWishlist() {
-  const res = await fetch("{API_BASE}/wishlist");
+  const res = await fetch(`${API_BASE}/wishlist`);
   return await res.json();
 }
 
 async function addWishlistItem(name, amount, priority = 1) {
-  const res = await fetch("{API_BASE}/wishlist", {
+  const res = await fetch(`${API_BASE}/wishlist`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name, amount, priority }),
@@ -672,13 +691,13 @@ async function addWishlistItem(name, amount, priority = 1) {
 }
 
 async function deleteWishlistItem(id) {
-  await fetch(`{API_BASE}/wishlist/${id}`, { method: "DELETE" });
+  await fetch(`${API_BASE}/wishlist/${id}`, { method: "DELETE" });
 }
 
 async function loadData() {
   // ✅ Load wishlist from backend API
   wishlist = await getWishlist();
-        transactions = await (await fetch("{API_BASE}/transactions")).json();
+        transactions = await (await fetch(`${API_BASE}/transactions`)).json();
         budgets = await getBudgets();
         const savedRules = JSON.parse(localStorage.getItem('categoryRules'));
         const defaultRules = {};
@@ -1452,7 +1471,7 @@ async function handleAddBudget(e) {
   const limit_amount = parseFloat(document.getElementById('budgetAmount').value);
 
   if (category && !isNaN(limit_amount)) {
-    await addBudget(category, limit_amount); // ✅ calls backend POST /api/budgets
+    await addBudget(category, limit); // ✅ calls backend POST /api/budgets
     e.target.reset();
     await loadData(); // refresh from DB
     renderAll();      // re-render UI
