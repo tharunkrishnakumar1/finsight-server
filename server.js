@@ -21,17 +21,6 @@ const __dirname = path.dirname(__filename);
 
 // --- Middleware ---
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "public"))); // serves Finsight.html etc.
-
-// --- Test DB connection ---
-app.get("/test-db", async (req, res) => {
-  try {
-    const [rows] = await pool.query("SELECT 1 + 1 AS result");
-    res.json({ success: true, result: rows[0].result });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
 
 // --- API Routes ---
 app.use("/users", userRoutes);
@@ -40,6 +29,24 @@ app.use("/auth", authRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/budgets", budgetRoutes);
+
+// --- Test DB Connection ---
+app.get("/test-db", async (req, res) => {
+  try {
+    // ✅ PostgreSQL version
+    const result = await pool.query("SELECT 1 + 1 AS result");
+    res.json({ success: true, result: result.rows[0].result });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- Serve Frontend (important: last) ---
+app.use(express.static(path.join(__dirname, "frontend")));
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "index.html"));
+});
 
 // --- Start server ---
 app.listen(PORT, () => {

@@ -377,6 +377,34 @@
         max-height: 250px;
       }
     }
+html, body {
+  height: 100%;
+  margin: 0;
+  background: var(--bg-color);
+  color: var(--text-color);
+  overflow-x: hidden;
+}
+
+#loader-overlay,
+#modal-overlay {
+  display: none; /* ensure they're fully hidden by default */
+}
+
+#loader-overlay[style*="none"],
+#modal-overlay[style*="none"] {
+  display: none !important; /* force override to hide them */
+}
+
+#budgets,
+#spending,
+#categorize,
+#insights,
+#wishlist,
+#home {
+  min-height: calc(100vh - 140px); /* fills screen below header/tabs */
+  background: var(--bg-color);
+}
+
   </style>
 </head>
 <body>
@@ -1522,8 +1550,8 @@ renderBudgets();              // ✅ re-render that section only
 
         budgets.forEach((budget, index) => {
             const spent = spendingByCategory[budget.category] || 0;
-            const remaining = budget.limit_amount - spent;
-            const percentage = (budget.limit_amount > 0) ? (spent / budget.limit_amount) * 100 : 0;
+            const remaining = budget.amount - spent;
+            const percentage = (budget.amount > 0) ? (spent / budget.amount) * 100 : 0;
             const isOverspent = percentage > 100;
             const isSeverelyOverspent = percentage >= 200;
 
